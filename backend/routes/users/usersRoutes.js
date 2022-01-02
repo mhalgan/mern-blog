@@ -1,12 +1,11 @@
 const express = require("express");
 const {
   userRegisterController,
+  userLoginController,
 } = require("../../controllers/users/usersController");
 const usersRoutes = express.Router();
 
 usersRoutes.post("/register", userRegisterController);
-usersRoutes.post("/api/users/login", (req, res) => {
-  res.json({ user: "User Login" });
-});
+usersRoutes.post("/login", userLoginController);
 
 module.exports = usersRoutes;

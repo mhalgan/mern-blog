@@ -104,9 +104,14 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
 
   // Generate default profile photo
-  this.profilePhoto = `https://robohash.org/${this.id}`;
+  this.profilePhoto = `https://robohash.org/${this.firstName}`;
   next();
 });
+
+userSchema.methods.isPasswordMatched = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

@@ -180,6 +180,44 @@ const unfollowUserController = asyncHandler(async (req, res) => {
   res.json({ message: "You have successfully unfollowed this user" });
 });
 
+const blockUserController = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoID(id);
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      id,
+      {
+        isBlocked: true,
+      },
+      { new: true }
+    );
+
+    res.json(user);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+const unblockUserController = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoID(id);
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      id,
+      {
+        isBlocked: false,
+      },
+      { new: true }
+    );
+
+    res.json(user);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
 module.exports = {
   userRegisterController,
   userLoginController,
@@ -191,4 +229,6 @@ module.exports = {
   deleteUserController,
   followUserController,
   unfollowUserController,
+  blockUserController,
+  unblockUserController,
 };

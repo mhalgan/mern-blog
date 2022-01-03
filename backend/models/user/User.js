@@ -104,7 +104,7 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
 
   // Generate default profile photo
-  this.profilePhoto = `https://robohash.org/${this.firstName}`;
+  this.profilePhoto = `https://robohash.org/${this.id}`;
   next();
 });
 

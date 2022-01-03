@@ -122,6 +122,64 @@ const deleteUserController = asyncHandler(async (req, res) => {
   }
 });
 
+const followUserController = asyncHandler(async (req, res) => {
+  const { followId } = req.body;
+  const loginUserId = req.user.id;
+
+  const targetUser = await User.findById(followId);
+  const alreadyFollowing = targetUser?.followers?.find(
+    (followerId) => followerId?.toString() === loginUserId
+  );
+
+  if (alreadyFollowing) throw new Error("You already followed this user");
+  // Update the Followers field from the user being followed with the login user
+  await User.findByIdAndUpdate(
+    followId,
+    {
+      $push: { followers: loginUserId },
+      isFollowing: true,
+    },
+    { new: true }
+  );
+
+  // Update the login user Following field with the user being followed
+  await User.findByIdAndUpdate(
+    loginUserId,
+    {
+      $push: { following: followId },
+    },
+    { new: true }
+  );
+
+  res.json({ message: "You have successfully followed this user" });
+});
+
+const unfollowUserController = asyncHandler(async (req, res) => {
+  const { unfollowId } = req.body;
+  const loginUserId = req.user.id;
+
+  // Remove login user from the Followers field on the user being unfollowed
+  await User.findByIdAndUpdate(
+    unfollowId,
+    {
+      $pull: { followers: loginUserId },
+      isFollowing: false,
+    },
+    { new: true }
+  );
+
+  // Remove user being unfoolowed from the login user Following field
+  await User.findByIdAndUpdate(
+    loginUserId,
+    {
+      $pull: { following: unfollowId },
+    },
+    { new: true }
+  );
+
+  res.json({ message: "You have successfully unfollowed this user" });
+});
+
 module.exports = {
   userRegisterController,
   userLoginController,
@@ -131,4 +189,6 @@ module.exports = {
   updateUserController,
   updateUserPasswordController,
   deleteUserController,
+  followUserController,
+  unfollowUserController,
 };

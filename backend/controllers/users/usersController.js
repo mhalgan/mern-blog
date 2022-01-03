@@ -56,6 +56,60 @@ const fetchUserDetailsController = asyncHandler(async (req, res) => {
   }
 });
 
+const userProfileController = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongoID(id);
+
+  try {
+    const userProfile = await User.findById(id);
+    res.json(userProfile);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+const updateUserController = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  validateMongoID(id);
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        firstName: req?.body?.firstName,
+        lastName: req?.body?.lastName,
+        email: req?.body?.email,
+        bio: req?.body?.bio,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    res.json(updatedUser);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+const updateUserPasswordController = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  const { password } = req.body;
+  validateMongoID(id);
+
+  try {
+    const user = await User.findById(id);
+
+    if (password) {
+      user.password = password;
+      const updatedUser = await user.save();
+      res.json(updatedUser);
+    }
+  } catch (error) {
+    res.json(error);
+  }
+});
+
 const deleteUserController = asyncHandler(async (req, res) => {
   const { id } = req.params;
   validateMongoID(id);
@@ -73,5 +127,8 @@ module.exports = {
   userLoginController,
   fetchAllUsersController,
   fetchUserDetailsController,
+  userProfileController,
+  updateUserController,
+  updateUserPasswordController,
   deleteUserController,
 };

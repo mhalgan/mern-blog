@@ -12,12 +12,24 @@ const {
   unfollowUserController,
   blockUserController,
   unblockUserController,
+  generateVerificationTokenController,
+  accountVerificationController,
 } = require("../../controllers/users/usersController");
 const authMiddleware = require("../../middleware/auth/authMiddleware");
 const usersRoutes = express.Router();
 
 usersRoutes.post("/register", userRegisterController);
 usersRoutes.post("/login", userLoginController);
+usersRoutes.post(
+  "/generate-verification-token",
+  authMiddleware,
+  generateVerificationTokenController
+);
+usersRoutes.post(
+  "/verify-account",
+  authMiddleware,
+  accountVerificationController
+);
 usersRoutes.get("/", authMiddleware, fetchAllUsersController);
 usersRoutes.get("/profile/:id", authMiddleware, userProfileController);
 usersRoutes.get("/:id", fetchUserDetailsController);

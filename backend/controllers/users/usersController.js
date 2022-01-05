@@ -1,7 +1,11 @@
 const asyncHandler = require("express-async-handler");
-const User = require("../../models/user/User");
+const sgMail = require("@sendgrid/mail");
+const crypto = require("crypto");
 const generateToken = require("../../config/token/generateToken");
 const validateMongoID = require("../../utils/validateMongoID");
+const User = require("../../models/user/User");
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const userRegisterController = asyncHandler(async (req, res) => {
   const userExists = await User.findOne({ email: req?.body?.email });
@@ -218,6 +222,49 @@ const unblockUserController = asyncHandler(async (req, res) => {
   }
 });
 
+const generateVerificationTokenController = asyncHandler(async (req, res) => {
+  const loginUserId = req.user?.id;
+  const user = await User.findById(loginUserId);
+
+  const verificationToken = await user.createAccountVerificationToken();
+  await user.save();
+
+  const resetUrl = `http://localhost:3000/verify-account/${verificationToken}`;
+
+  try {
+    const msg = {
+      to: "glbrcmrg@gmail.com",
+      from: "gccr92@gmail.com",
+      subject: "Account verification",
+      html: `The following link will expire within 30 minutes: <a href="${resetUrl}">Click here to verify your account</a>`,
+    };
+
+    await sgMail.send(msg);
+    res.json({ message: "Email sent" });
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+const accountVerificationController = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const foundUser = await User.findOne({
+    accountVerificationToken: hashedToken,
+    accountVerificationTokenExpires: { $gt: Date.now() },
+  });
+
+  if (!foundUser) throw new Error("Token expired, try again later");
+
+  foundUser.isAccountVerified = true;
+  foundUser.accountVerificationToken = undefined;
+  foundUser.accountVerificationTokenExpires = undefined;
+
+  await foundUser.save();
+  res.json({ message: "User successfully verified" });
+});
+
 module.exports = {
   userRegisterController,
   userLoginController,
@@ -231,4 +278,6 @@ module.exports = {
   unfollowUserController,
   blockUserController,
   unblockUserController,
+  generateVerificationTokenController,
+  accountVerificationController,
 };
